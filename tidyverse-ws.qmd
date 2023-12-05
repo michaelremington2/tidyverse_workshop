@@ -7,17 +7,19 @@ editor: visual
 
 ## TidyVerse Workshop
 
-Welcome to the tidyverse workshop!
+::: incremental
+-   Welcome to the tidyverse workshop!
 
-Further reading about how to use the Tidyverse can be found here: <https://www.tidyverse.org/>
+-   Further reading about how to use the Tidyverse can be found here: <https://www.tidyverse.org/>
 
-Today we will be walking through what Tidyverse is and how to use it for your next project.
+-   Today we will be walking through what Tidyverse is and how to use it for your next project.
+:::
 
 ## What is Tidyverse
 
 Tidyverse is a collection of R packages that synergize well to accomplish data science and data wrangling tasks.
 
-The list of the main package includes:
+The list of the main packages includes:
 
 ::: incremental
 -   readr: Data Importing/Exporting
