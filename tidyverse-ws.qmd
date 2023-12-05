@@ -1,0 +1,352 @@
+---
+title: "Tidyverse-ws"
+author: "Michael Remington"
+format: revealjs
+editor: visual
+---
+
+## TidyVerse Workshop
+
+Welcome to the tidyverse workshop!
+
+Further reading about how to use the Tidyverse can be found here: <https://www.tidyverse.org/>
+
+Today we will be walking through what Tidyverse is and how to use it for your next project.
+
+## What is Tidyverse
+
+Tidyverse is a collection of R packages that synergize well to accomplish data science and data wrangling tasks.
+
+The list of the main package includes:
+
+::: incremental
+-   readr: Data Importing/Exporting
+-   dplyR: Data Wrangling
+-   tidyR: Data Wrangling
+-   ggplot2: Data Visualization
+-   more!
+:::
+
+## Install Packages
+
+```{r, echo=TRUE, eval = FALSE}
+#Install the packages if you haven't already
+install.packages(tidyverse)
+
+#################################
+# or dowload them independently #
+#################################
+
+install.packages("dplyr", dependencies = T)
+install.packages("tidyr", dependencies = T)
+install.packages("readr", dependencies = T)
+install.packages("ggplot2", dependencies = T)
+
+```
+
+## Load Packages
+
+```{r, echo=T}
+library(tidyverse)
+
+#######
+# or ##
+#######
+
+# library(dplyr)
+# library(tidyr)
+# library(readr)
+# library(ggplot2)
+```
+
+## DataFrames
+
+-   The central theme of all of these r packages is storing data into a **dataframe**.
+
+-   A **dataframe** is data structure that treats variables as columns and the rows are the values. Rows are also sorted by an index.
+
+-   This is the central theme of tidyverse!
+
+    -   Columns are variables
+
+    -   rows are observations
+
+## DataFrames (Code)
+
+```{r, echo=TRUE}
+# Creating a generic dataframe
+my_dataframe <- data.frame(
+  ID = c(1, 2, 3, 4),
+  Name = c("John", "Jane", "Bob", "Alice"),
+  Age = c(28, 35, 22, 29),
+  City = c("New York", "San Francisco", "Chicago", "Los Angeles"),
+  Salary = c(60000, 80000, 50000, 70000)
+)
+
+# Displaying the dataframe
+print(my_dataframe)
+
+```
+
+## Working with Data in a Dataframe
+
+We can call and manipulate our variables by calling them from the data frame using the **\$** operator
+
+```{r, echo=TRUE}
+print(paste('Number of rows:', length(my_dataframe$ID)))
+print(paste('Mean Age:', mean(my_dataframe$Age)))
+print(paste('Median Salary:', mean(my_dataframe$Salary)))
+```
+
+## Adding new columns to a Dataframe
+
+```{r, echo=T}
+my_dataframe$Job_title <- c('Analyst',
+                            'Sales Associate',
+                            'Manager',
+                            'Sales Associate')
+print(my_dataframe)
+```
+
+## Readr Importing Data
+
+```{r, echo=T}
+# Specify the file path
+# Data source from https://www.kaggle.com/datasets/m000sey/save-the-honey-bees/data
+file_path <- "save_the_bees.csv"
+# Read the CSV file into a dataframe
+bees <- read_csv(file_path)
+# Display the dataframe
+spec(bees)
+```
+
+## Viewing the Data
+
+```{r, echo=T}
+View(bees)
+```
+
+## Dplyr and data wrangling
+
+-   Lets say we are just starting our Bee research journey and just want a time series plot of average number of colonies by quarter
+
+-   First, the code then I will break it down step by step!
+
+```{r,echo=T}
+bees_by_qtr <- bees %>%
+                group_by(quarter) %>% 
+                summarise(num_colonies_avg = mean(num_colonies))
+print(bees_by_qtr)
+```
+
+## Chain Command %\>%
+
+The chain command (**%\>%**) allows R to run commands incrementally.
+
+```{r,echo=T}
+bees_by_qtr <- bees %>%
+               group_by(quarter) %>%
+               summarise(num_colonies_avg = mean(num_colonies))
+```
+
+**One way to read the code above**:
+
+1\) We are making a new dataset called bees_by_qtr from the bees dataset
+
+2\) Take the bees dataset THEN (**%\>%**)
+
+2\) Group by the quarter category THEN (**%\>%**)
+
+3\) Summarise the average number of colonies
+
+## Group By and Summarise()
+
+::: {style="display: flex; justify-content: space-between; align-items: center;"}
+| year | val |
+|------|-----|
+| 2019 | 2   |
+| 2019 | 4   |
+| 2019 | 6   |
+| 2020 | 1   |
+| 2020 | 3   |
+
+`group_by(year) %>% summarise(avg_val=mean(val))` \-\--\>
+
+| year | avg_val |
+|------|---------|
+| 2019 | 4       |
+| 2020 | 1.5     |
+:::
+
+## Grouping by multiple columns
+
+Our previous analysis wasn't really a time series analysis it was a summary by quarter, we need to bring in the year as well!
+
+```{r,echo=T}
+bees_ts <- bees %>%
+                 group_by(year, quarter) %>%
+                 summarise(num_colonies_avg = mean(num_colonies)) %>%
+                 arrange(year, quarter)
+head(bees_ts)
+```
+
+## Other Useful Dplyr Commands: rename, select, and mutate
+
+```{r, echo=T}
+net_growth <- bees %>%
+              select(state, year, quarter,
+              added_colonies, lost_colonies,
+              varroa_mites, pesticides) %>%
+              mutate(net_colonies=added_colonies-lost_colonies) %>%
+              rename("qtr"=quarter) %>%
+              arrange(state, year, qtr)
+head(net_growth)
+```
+
+## TidyR Pivot Wider
+
+Widens data, increasing the number of columns and decreasing the number of rows.
+
+```{r,echo=T}
+bees_by_state <- bees %>%
+  select(state, year, num_colonies) %>%
+  group_by(state, year) %>%
+  summarise(num_colonies_avg = mean(num_colonies)) %>%
+  pivot_wider(
+    names_from = year,
+    values_from = num_colonies_avg
+  ) %>%
+  filter(state != 'United States')
+head(bees_by_state)
+```
+
+## TidyR Pivot Longer
+
+Pivot longer does the opposite of pivot wider as it turns columns into rows.
+
+```{r,echo=T}
+filter_states <- c('California', 'Florida', 'North Dakota', 'Texas', 'Oregon')
+bees_by_state_long <- bees_by_state %>%
+                    pivot_longer(-state, names_to = "year", values_to = "avg_num_colonies") %>%
+                    filter(state %in% filter_states) %>%
+                    arrange(state, year)
+                    
+head(bees_by_state_long)
+```
+
+## GGplot2
+
+Lets make our first visualization! Lets look at a bar chart of the stats with the most bee colonies in 2020.
+
+## Vizualization
+
+```{r, echo=T}
+ggplot(bees_by_state, aes(x = reorder(state, -`2020`), y = `2020`))+
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Colonies by State: 2020", x = "State", y = "Mean Number of Colonies")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+## Aesthetic mapping, aes()
+
+This is a function to set the variables you would like to plot
+
+```{r, echo=T, eval = FALSE}
+aes(x = reorder(state, -`2020`), y = `2020`)
+```
+
+## Layers
+
+This is where you actually define the type of chart you would like and set the labels of the chart
+
+```{r, echo=T, eval = FALSE}
+geom_bar(stat = "identity", fill = "blue")
+# Customize your bars
+geom_bar(stat = "identity", fill = "blue", width = 0.1)
+```
+
+## Layers
+
+Layers are also how you edit the attributes of your figure
+
+```{r, echo=T, eval = FALSE}
+labs(title = "Colonies by State: 2020", x = "State", y = "Mean Number of Colonies")+
+theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+## More Visualizations
+
+Lets make a time series figure.
+
+```{r, echo=T}
+ggplot(bees_by_state_long, aes(x = year, y = avg_num_colonies, color = state, group = state)) +
+  geom_path() +
+  labs(title = "Time Series Plot with State Labels", x = "Year", y = "Mean Colonies", color = "State")
+```
+
+## Previous Graph by Quarter
+
+Lets get a dataset that will work for us!
+
+```{r, echo=T}
+bees_by_qtr_ts <- bees %>%
+                 mutate(time = paste(year, '-', quarter)) %>%
+                 group_by(state, year, quarter, time) %>%
+#                summarise(num_colonies_avg = mean(num_colonies)) %>%
+                 filter(state %in% filter_states) %>%
+                 arrange(state, year)
+```
+
+## Previous Graph by Quarter
+
+```{r, echo=T}
+bees_ts_fig <- ggplot(bees_by_qtr_ts, aes(x = time, y = num_colonies, color = state, group = state)) +
+  geom_line() +
+  labs(title = "Time Series Plot with State Labels", x = "TIme", y = "Mean Colonies", color = "State")
+
+bees_ts_fig +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+## Joins
+
+A join is the merger of two datasets into one. Datasets are joined by keys (Id columns).
+
+This first join is an **inner join**. an inner join will only keep values that are associated between the two sets. In mathematical terms its the intersection of the two sets.
+
+```{r,echo=T}
+# Create two data frames
+df1 <- tibble(ID = c(1, 2, 3), Value = c("A", "B", "C"))
+df2 <- tibble(ID = c(2, 3, 4), Description = c("Apple", "Banana", "Cherry"))
+
+# Inner join based on the "ID" column
+inner_joined <- inner_join(df1, df2, by = "ID")
+
+# View the result
+print(inner_joined)
+```
+
+## Left Join
+
+A left join ensures that you keep all the information from the "left" table and add additional details from the "right" table where matches are found.
+
+```{r, echo=T}
+# Create two data frames
+df1 <- tibble(ID = c(1, 2, 3), Value = c("A", "B", "C"))
+df2 <- tibble(ID = c(2, 3, 4), Description = c("Apple", "Banana", "Cherry"))
+
+# Left join based on the "ID" column
+left_joined <- left_join(df1, df2, by = "ID")
+
+# View the result
+print(left_joined)
+
+```
+
+## Another data set
+
+```{r, echo=T}
+library(datasets)
+data(iris)
+head(iris)
+```
